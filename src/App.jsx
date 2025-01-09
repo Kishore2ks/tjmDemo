@@ -15,7 +15,7 @@ export default function GridLinesDemo() {
     { name: '12th mark sheet', id: '2' },
     { name: 'PAN', id: '3' },
     { name: 'Aadhar', id: '4' },
-    { name: 'Driving Licence', id: '5' },
+    { name: 'Driving Licence', id: '5' }
   ];
 
   const updateRowData = (id, updates) => {
