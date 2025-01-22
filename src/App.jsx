@@ -402,6 +402,10 @@ function Demo2() {
       currentRowsData.uploadedFiles =
         currentRowsData.uploadedFiles?.filter((x) => x.type !== name) || [];
       updatedProducts[index] = currentRowsData;
+      setVisible((prevVisible) => ({
+        ...prevVisible,
+        data: { rowIndex: index, rowsData: currentRowsData },
+      }));
       return updatedProducts;
     });
 
@@ -428,10 +432,6 @@ function Demo2() {
           };
         })
         .filter((file) => file !== null);
-      setSelectedFiles((prevSelectedFiles) => [
-        ...prevSelectedFiles,
-        ...newFiles,
-      ]);
 
       setProducts((prevProducts) => {
         const updatedProducts = [...prevProducts];
@@ -443,6 +443,10 @@ function Demo2() {
           ],
           selectedDocument: null,
         };
+        setSelectedFiles((prevSelectedFiles) => [
+          ...prevSelectedFiles,
+          ...newFiles,
+        ]);
         setVisible((prevVisible) => ({
           ...prevVisible,
           data: { rowIndex: rowIndex, rowsData: updatedProducts[rowIndex] },
@@ -656,7 +660,7 @@ function Demo2() {
 
 function Demo3() {
   const [products, setProducts] = useState([]);
-  const [expandedRows, setExpandedRows] = useState({1:true});
+  const [expandedRows, setExpandedRows] = useState({ 1: true });
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const totalFiles = selectedFiles.length;
@@ -735,7 +739,7 @@ function Demo3() {
       <FileUpload
         ref={fileUploadRef}
         mode="basic"
-        chooseLabel="Upload File"
+        chooseLabel="Choose File"
         name="demo[]"
         accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
         maxFileSize={3145728}
