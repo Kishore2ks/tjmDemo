@@ -416,8 +416,10 @@ function Demo2() {
 
   const FileUploadComp = ({ data: { rowsData, rowIndex }, DocumentType }) => {
     const fileUploadRef = useRef(null);
-
+  
     const onUpload = (e) => {
+      console.log("Files selected:", e.files);
+  
       const newFiles = e.files
         .map((file) => {
           if (file.size > 3 * 1024 * 1024) {
@@ -428,41 +430,50 @@ function Demo2() {
             documentName: file.name,
             type: DocumentType || "",
             size: file.size,
-            id: `${file.name}_${file.size}_${file.DocumentType}_${rowIndex}`,
+            id: `${file.name}_${file.size}_${DocumentType}_${rowIndex}`,
           };
         })
         .filter((file) => file !== null);
-
+  
+      if (newFiles.length === 0) {
+        console.log("No valid files to upload");
+        return;
+      }
+  
+      setSelectedFiles((prevSelectedFiles) => [
+        ...prevSelectedFiles,
+        ...newFiles,
+      ]);
+  
       setProducts((prevProducts) => {
         const updatedProducts = [...prevProducts];
         updatedProducts[rowIndex] = {
           ...updatedProducts[rowIndex],
           uploadedFiles: [
-            ...(updatedProducts[rowIndex].uploadedFiles || []),
+            ...(updatedProducts[rowIndex]?.uploadedFiles || []),
             ...newFiles,
           ],
           selectedDocument: null,
         };
-        setSelectedFiles((prevSelectedFiles) => [
-          ...prevSelectedFiles,
-          ...newFiles,
-        ]);
-        setVisible((prevVisible) => ({
-          ...prevVisible,
-          data: { rowIndex: rowIndex, rowsData: updatedProducts[rowIndex] },
-        }));
+        console.log("Updated products:", updatedProducts);
         return updatedProducts;
       });
-      // alert("File Added successfully!");
+  
+      setVisible((prevVisible) => ( {
+        ...prevVisible,
+        data: { rowIndex: rowIndex, rowsData: { ...rowsData, uploadedFiles: [...(rowsData.uploadedFiles || []), ...newFiles] } },
+      }));
+  
       clearFileUpload();
+      console.log("File upload completed");
     };
-
+  
     const clearFileUpload = () => {
       if (fileUploadRef.current) {
         fileUploadRef.current.clear();
       }
     };
-
+  
     return (
       <FileUpload
         ref={fileUploadRef}
@@ -470,7 +481,7 @@ function Demo2() {
         chooseLabel="Choose File"
         name="demo[]"
         accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-        maxFileSize={1000000}
+        maxFileSize={3 * 1024 * 1024}
         customUpload={true}
         onSelect={(e) => {
           onUpload(e);
@@ -478,7 +489,6 @@ function Demo2() {
       />
     );
   };
-
   useEffect(() => {
     ProductService.getProductsMini().then((data) => setProducts(data));
   }, []);
@@ -705,7 +715,7 @@ function Demo3() {
             documentName: file.name,
             type: DocumentType || "",
             size: file.size,
-            id: `${file.name}_${file.size}_${file.DocumentType}_${rowIndex}`,
+            id: `${file.name}_${file.size}_${DocumentType}_${rowIndex}`,
           };
         })
         .filter((file) => file !== null);
