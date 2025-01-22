@@ -8,8 +8,8 @@ export const ProductService = {
         mobileNumber: '8899756321',
         documentName: '10th mark sheet',
         uploadedFiles: [
-          { type: 'Aadhar', documentName: '321_aadhar.pdf' },
-          { type: 'PAN', documentName: '321_pan.pdf' },
+          { type: 'Aadhar', documentName: '321_aadhar.pdf', uploaded:true },
+          { type: 'PAN', documentName: '321_pan.pdf', uploaded:true },
         ],
       },
       {
