@@ -7,6 +7,7 @@ import { Dropdown } from "primereact/dropdown";
 import { FileUpload } from "primereact/fileupload";
 import { Dialog } from "primereact/dialog";
 import { TabView, TabPanel } from "primereact/tabview";
+import { Message } from "primereact/message";
 
 function Demo1() {
   const [products, setProducts] = useState([]);
@@ -176,32 +177,6 @@ function Demo2() {
     { name: "Driving License", id: "5" },
   ];
 
-  // const updateRowData = (id, updates) => {
-  //   setProducts((prevProducts) =>
-  //     prevProducts.map((product) =>
-  //       product.id === id ? { ...product, ...updates } : product
-  //     )
-  //   );
-  // };
-
-  // const RowDropDown = ({ rowsData }) => {
-  //   const onValueChange = (e) => {
-  //     // setSelectedDocument(e.value);
-  //     updateRowData(rowsData?.id, { selectedDocument: e.value });
-  //   };
-
-  //   return (
-  //     <Dropdown
-  //       value={rowsData?.selectedDocument || null}
-  //       onChange={(e) => onValueChange(e)}
-  //       options={DocumentType}
-  //       optionLabel="name"
-  //       placeholder="Document Type"
-  //       className="w-full md:w-14rem"
-  //     />
-  //   );
-  // };
-
   const deleteDocument = (index, name) => {
     setProducts((prevProducts) => {
       const updatedProducts = [...prevProducts];
@@ -248,13 +223,13 @@ function Demo2() {
 
     const clearFileUpload = () => {
       if (fileUploadRef.current) {
-        fileUploadRef.current.clear(); // Clears the file upload input
+        fileUploadRef.current.clear();
       }
     };
 
     return (
       <FileUpload
-        ref={fileUploadRef} // Attach the ref to the FileUpload component
+        ref={fileUploadRef}
         mode="basic"
         chooseLabel="Upload File"
         name="demo[]"
@@ -401,6 +376,181 @@ function Demo2() {
   );
 }
 
+function Demo3() {
+  const [products, setProducts] = useState([]);
+  const [expandedRows, setExpandedRows] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+ 
+  const totalFiles = selectedFiles.length;
+  const totalFileSize = selectedFiles.reduce((acc, file) => acc + file.size, 0);
+  const totalFileSizeMB = (totalFileSize / (1024 * 1024)).toFixed(2);
+  const isFileSizeExceeded = totalFileSizeMB > 100;
+
+  const DocumentType = [
+    { name: "10th mark sheet", id: "1" },
+    { name: "12th mark sheet", id: "2" },
+    { name: "PAN", id: "3" },
+    { name: "Aadhar", id: "4" },
+    { name: "Driving License", id: "5" },
+  ];
+
+  const deleteDocument = (index, name) => {
+    setProducts((prevProducts) => {
+      const updatedProducts = [...prevProducts];
+      const currentRowsData = { ...updatedProducts[index] };
+      currentRowsData.uploadedFiles =
+        currentRowsData.uploadedFiles?.filter((x) => x.type !== name) || [];
+      updatedProducts[index] = currentRowsData;
+      return updatedProducts;
+    });
+  };
+
+  const FileUploadComp = ({ data: { rowsData, rowIndex }, DocumentType }) => {
+    const fileUploadRef = useRef(null);
+
+    const onUpload = (e) => {
+      const newFiles = e.files.map((file) => {
+        if (file.size > 3 * 1024 * 1024) {
+          alert("Each file size should not exceed 3MB");
+          return null;
+        }
+        return {
+          documentName: file.name,
+          type: DocumentType || "",
+          size: file.size,
+        };
+      }).filter(file => file !== null);
+      setSelectedFiles((prevSelectedFiles) => [...prevSelectedFiles, ...newFiles]);
+
+      setProducts((prevProducts) => {
+        const updatedProducts = [...prevProducts];
+        updatedProducts[rowIndex] = {
+          ...updatedProducts[rowIndex],
+          uploadedFiles: [
+            ...(updatedProducts[rowIndex]?.uploadedFiles || []),
+            ...newFiles,
+          ],
+          selectedDocument: null,
+        };
+        return updatedProducts;
+      });
+      clearFileUpload();
+    };
+
+    const clearFileUpload = () => {
+      if (fileUploadRef.current) {
+        fileUploadRef.current.clear();
+      }
+    };
+
+    return (
+      <FileUpload
+        ref={fileUploadRef}
+        mode="basic"
+        chooseLabel="Upload File"
+        name="demo[]"
+        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+        maxFileSize={3145728}
+        customUpload={true}
+        onSelect={(e) => {
+          onUpload(e);
+        }}
+      />
+    );
+  };
+
+  useEffect(() => {
+    ProductService.getProductsMini().then((data) => setProducts(data));
+  }, []);
+
+  const rowExpansionTemplate = (rowsData, { index: rowIndex }) => {
+    return (
+      <div className="p-3">
+        <div className="flex justify-content-between">
+          <h5>Uploaded files for {rowsData.studentName}</h5>
+          <div>
+            <Message
+              text={"Upload Selected Files for " + rowsData.studentName}
+            />
+            <Button label="Upload Now" onClick={() => {}} />
+          </div>
+        </div>
+        <DataTable value={DocumentType} showGridlines>
+          <Column field="name" header="Document Type"></Column>
+          <Column
+            header="Upload Respective Documents"
+            body={(documentRow) => {
+              const rowSelectedDocument = rowsData?.uploadedFiles?.find(
+                (x) => x.type === documentRow.name
+              );
+              return (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  {rowSelectedDocument ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      {rowSelectedDocument?.documentName || "File ERROR"}
+                      <Button
+                        icon="pi pi-times-circle"
+                        rounded
+                        text
+                        onClick={() => {
+                          deleteDocument(rowIndex, documentRow.name);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <FileUploadComp
+                      data={{ rowsData, rowIndex }}
+                      DocumentType={documentRow.name}
+                    />
+                  )}
+                </div>
+              );
+            }}
+          ></Column>
+        </DataTable>
+      </div>
+    );
+  };
+
+  return (
+    <div className="card">
+      <div className="flex flex-column justify-content-end p-2  align-items-end w-100">
+        <span>Total Files Selected: {totalFiles}</span>
+        <span style={{ color: isFileSizeExceeded ? 'red' : 'inherit' }}>
+          Total File Size: {totalFileSizeMB} MB / 100
+          MB
+        </span>
+      </div>
+      <DataTable
+        value={products}
+        showGridlines
+        expandedRows={expandedRows}
+        onRowToggle={(e) => setExpandedRows(e.data)}
+        rowExpansionTemplate={rowExpansionTemplate}
+        dataKey="id"
+        tableStyle={{ minWidth: "50rem" }}
+      >
+        <Column expander={true} />
+        <Column field="studentName" header="Student Name"></Column>
+        <Column field="emailID" header="Email ID"></Column>
+        <Column field="mobileNumber" header="Mobile Number"></Column>
+      </DataTable>
+      <div className="flex justify-content-end p-2">
+        <Message text={"Upload All Selected Files"} />
+        <Button label="Upload All" onClick={() => {}} disabled={isFileSizeExceeded} />
+      </div>
+    </div>
+  );
+}
+
 export default function GridLinesDemo() {
   return (
     <div className="card">
@@ -410,6 +560,9 @@ export default function GridLinesDemo() {
         </TabPanel>
         <TabPanel header="Sample II">
           <Demo2 />
+        </TabPanel>
+        <TabPanel header="Sample III">
+          <Demo3 />
         </TabPanel>
       </TabView>
     </div>
